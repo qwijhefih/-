@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>핵심 요약 (KB) - 실기 퀴즈</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 카드 스타일 (퀴즈와 동일) */
+    .kb-card {
+      background-color: white;
+      border-radius: 1rem; /* rounded-2xl */
+      border: 1px solid #e5e7eb; /* border-neutral-200 */
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.06); /* shadow-sm */
+      padding: 1.5rem; /* p-6 */
+    }
+  </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+  
+  <header class="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-neutral-200">
+    <div class="max-w-[1400px] mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="font-semibold tracking-tight">핵심 요약 (KB)</div>
+      <a href="{{ url_for('index') }}" class="px-3 h-9 rounded-lg bg-neutral-900 text-white text-sm flex items-center hover:opacity-90">
+        퀴즈로 돌아가기
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-[1000px] mx-auto px-4 py-8">
+    <div class="space-y-4">
+      
+      {% for item in kb_data %}
+        <div class="kb-card">
+          <h2 class="text-lg font-semibold mb-2">{{ item.name }}</h2>
+          <p class="text-blue-700 font-bold mb-3">
+            [암기어] {{ item.mnemonic }}
+          </p>
+          <ul class="list-disc list-inside text-sm space-y-1">
+            {% for sub_item in item['items'] %}
+              <li>{{ sub_item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endfor %}
+
+    </div>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#171717" />
+  <title>정보처리산업기사 학습 플랫폼</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          screens: {
+            'xs': '475px',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-text {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .feature-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-neutral-50 via-purple-50 to-blue-50 dark:from-neutral-900 dark:via-purple-950 dark:to-blue-950 min-h-screen text-neutral-900 dark:text-neutral-100 transition-colors">
+  
+  <!-- 네비게이션 -->
+  <nav class="backdrop-blur-lg bg-white/70 dark:bg-neutral-900/70 border-b border-neutral-200 dark:border-neutral-700 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-2">
+          <div class="text-2xl">🎓</div>
+          <div class="font-bold text-lg gradient-text">정처산기</div>
+        </div>
+        <div class="flex items-center gap-3">
+          <button id="btn-dark-toggle" class="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">
+            <span id="dark-icon">🌙</span>
+          </button>
+          <a href="/quiz" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all font-semibold shadow-lg">
+            퀴즈 시작하기
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 히어로 섹션 -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+    <div class="mb-6">
+      <span class="inline-block px-4 py-2 bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 rounded-full text-sm font-semibold mb-4">
+        🚀 AI 기반 학습 플랫폼
+      </span>
+    </div>
+    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+      정보처리산업기사<br/>
+      <span class="gradient-text">스마트하게 합격하자</span>
+    </h1>
+    <p class="text-lg sm:text-xl text-neutral-600 dark:text-neutral-400 mb-10 max-w-2xl mx-auto">
+      AI 튜터, 자동 문제 생성, 약점 분석까지<br/>
+      체계적인 학습으로 한 번에 합격하세요
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <a href="/quiz" class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all font-bold text-lg shadow-xl">
+        🎯 지금 시작하기
+      </a>
+      <a href="/stats" class="w-full sm:w-auto px-8 py-4 bg-white dark:bg-neutral-800 border-2 border-neutral-200 dark:border-neutral-700 rounded-xl hover:border-purple-500 dark:hover:border-purple-500 transition-all font-semibold text-lg">
+        📊 학습 통계 보기
+      </a>
+    </div>
+  </section>
+
+  <!-- 통계 섹션 -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div class="bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-2xl p-6 text-center border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl font-bold text-purple-600 mb-2" id="stat-questions">500+</div>
+        <div class="text-neutral-600 dark:text-neutral-400">문제 은행</div>
+      </div>
+      <div class="bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-2xl p-6 text-center border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl font-bold text-blue-600 mb-2" id="stat-ai">AI 튜터</div>
+        <div class="text-neutral-600 dark:text-neutral-400">24시간 학습 지원</div>
+      </div>
+      <div class="bg-white/80 dark:bg-neutral-800/80 backdrop-blur-lg rounded-2xl p-6 text-center border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl font-bold text-green-600 mb-2" id="stat-features">10+</div>
+        <div class="text-neutral-600 dark:text-neutral-400">스마트 기능</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 주요 기능 섹션 -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold mb-4">🎯 핵심 기능</h2>
+      <p class="text-neutral-600 dark:text-neutral-400 text-lg">합격을 위한 모든 것이 준비되어 있습니다</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- 기능 카드 1 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">🤖</div>
+        <h3 class="text-xl font-bold mb-3">AI 자동 문제 생성</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">Gemini AI가 실시간으로 맞춤형 문제를 생성하여 무한한 학습 자료를 제공합니다.</p>
+        <a href="/quiz" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">시작하기 →</a>
+      </div>
+
+      <!-- 기능 카드 2 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">📊</div>
+        <h3 class="text-xl font-bold mb-3">약점 분석 시스템</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">카테고리별 정답률을 분석하여 취약한 부분을 집중 학습할 수 있습니다.</p>
+        <a href="/stats" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">분석 보기 →</a>
+      </div>
+
+      <!-- 기능 카드 3 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">🔁</div>
+        <h3 class="text-xl font-bold mb-3">간격 반복 학습</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">틀린 문제를 과학적인 주기로 재출제하여 장기 기억을 형성합니다.</p>
+        <a href="/quiz" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">복습하기 →</a>
+      </div>
+
+      <!-- 기능 카드 4 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">⏱️</div>
+        <h3 class="text-xl font-bold mb-3">실전 모의고사</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">실제 시험과 동일한 40문항, 40분 타이머로 실전 감각을 키웁니다.</p>
+        <a href="/quiz" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">모의고사 →</a>
+      </div>
+
+      <!-- 기능 카드 5 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">🏆</div>
+        <h3 class="text-xl font-bold mb-3">레벨 시스템</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">퀴즈를 풀며 경험치를 쌓고, 7단계 레벨을 달성하며 성취감을 느껴보세요.</p>
+        <a href="/stats" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">레벨 확인 →</a>
+      </div>
+
+      <!-- 기능 카드 6 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">📝</div>
+        <h3 class="text-xl font-bold mb-3">학습 메모</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">중요한 내용을 카테고리별로 정리하고 언제든지 다시 확인할 수 있습니다.</p>
+        <a href="/quiz" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">메모 작성 →</a>
+      </div>
+
+      <!-- 기능 카드 7 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">💬</div>
+        <h3 class="text-xl font-bold mb-3">AI 튜터 챗봇</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">궁금한 점을 실시간으로 질문하고 상세한 설명을 받을 수 있습니다.</p>
+        <a href="/quiz" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">질문하기 →</a>
+      </div>
+
+      <!-- 기능 카드 8 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">⭐</div>
+        <h3 class="text-xl font-bold mb-3">북마크 기능</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">중요한 문제를 북마크하고 나중에 다시 풀어볼 수 있습니다.</p>
+        <a href="/quiz" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">북마크 보기 →</a>
+      </div>
+
+      <!-- 기능 카드 9 -->
+      <div class="feature-card bg-white dark:bg-neutral-800 rounded-2xl p-6 border border-neutral-200 dark:border-neutral-700">
+        <div class="text-4xl mb-4">🌙</div>
+        <h3 class="text-xl font-bold mb-3">다크모드 지원</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 mb-4">눈의 피로를 줄이고 밤늦게까지 편안하게 학습할 수 있습니다.</p>
+        <button id="toggle-dark-demo" class="text-purple-600 dark:text-purple-400 font-semibold hover:underline">전환해보기 →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 학습 방법 섹션 -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="text-center mb-16">
+      <h2 class="text-3xl sm:text-4xl font-bold mb-4">📚 학습 로드맵</h2>
+      <p class="text-neutral-600 dark:text-neutral-400 text-lg">이렇게 공부하면 합격할 수 있습니다</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div class="text-center">
+        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">1</div>
+        <h3 class="font-bold text-lg mb-2">기초 다지기</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 text-sm">20문항 퀴즈로 전체 범위를 빠르게 학습</p>
+      </div>
+      <div class="text-center">
+        <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">2</div>
+        <h3 class="font-bold text-lg mb-2">약점 집중</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 text-sm">통계 분석으로 취약 카테고리 파악</p>
+      </div>
+      <div class="text-center">
+        <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">3</div>
+        <h3 class="font-bold text-lg mb-2">반복 학습</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 text-sm">오답 복습으로 완벽하게 이해</p>
+      </div>
+      <div class="text-center">
+        <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">4</div>
+        <h3 class="font-bold text-lg mb-2">실전 연습</h3>
+        <p class="text-neutral-600 dark:text-neutral-400 text-sm">모의고사로 실전 감각 익히기</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA 섹션 -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-12 text-center text-white">
+      <h2 class="text-3xl sm:text-4xl font-bold mb-4">지금 바로 시작하세요</h2>
+      <p class="text-lg mb-8 opacity-90">무료로 모든 기능을 사용할 수 있습니다</p>
+      <a href="/quiz" class="inline-block px-8 py-4 bg-white text-purple-600 rounded-xl hover:bg-neutral-100 transition-all font-bold text-lg shadow-xl">
+        🚀 퀴즈 풀러 가기
+      </a>
+    </div>
+  </section>
+
+  <!-- 푸터 -->
+  <footer class="bg-white/70 dark:bg-neutral-900/70 backdrop-blur-lg border-t border-neutral-200 dark:border-neutral-700 mt-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="text-center text-neutral-600 dark:text-neutral-400">
+        <p class="mb-2">🎓 정보처리산업기사 학습 플랫폼</p>
+        <p class="text-sm">AI 기반 스마트 학습으로 합격까지 함께합니다</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // 다크모드 토글
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('darkMode', isDark);
+      
+      const icon = document.getElementById('dark-icon');
+      if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+    }
+
+    // 초기 다크모드 설정
+    if (localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      const icon = document.getElementById('dark-icon');
+      if (icon) icon.textContent = '☀️';
+    }
+
+    // 이벤트 리스너
+    document.getElementById('btn-dark-toggle')?.addEventListener('click', toggleDarkMode);
+    document.getElementById('toggle-dark-demo')?.addEventListener('click', toggleDarkMode);
+  </script>
+</body>
+</html>

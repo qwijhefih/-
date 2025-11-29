@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>학습 통계 - 실기 퀴즈</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-neutral-50 text-neutral-900">
+  
+  <header class="sticky top-0 z-40 backdrop-blur bg-white/80 border-b border-neutral-200">
+    <div class="max-w-[1400px] mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="font-semibold tracking-tight">학습 통계 대시보드</div>
+      <a href="{{ url_for('index') }}" class="px-3 h-9 rounded-lg bg-neutral-900 text-white text-sm flex items-center hover:opacity-90">
+        퀴즈로 돌아가기
+      </a>
+    </div>
+  </header>
+
+  <main class="max-w-[1200px] mx-auto px-4 py-8">
+    
+    <!-- 레벨 카드 -->
+    <div id="level-card" class="bg-gradient-to-r from-purple-500 to-purple-700 rounded-2xl shadow-lg p-6 mb-8 text-white">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-sm opacity-90 mb-1">현재 레벨</div>
+          <div class="text-4xl font-bold" id="level-display">Lv.1 입문자</div>
+          <div class="text-sm opacity-90 mt-2" id="level-xp">0 XP</div>
+        </div>
+        <div class="text-6xl">🏆</div>
+      </div>
+      <div class="mt-4" id="level-progress-container">
+        <div class="flex justify-between text-xs mb-1">
+          <span id="level-progress-text">다음 레벨까지</span>
+          <span id="level-xp-needed">100 XP</span>
+        </div>
+        <div class="w-full bg-white/30 rounded-full h-3">
+          <div id="level-progress-bar" class="bg-white h-3 rounded-full transition-all" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 통계 카드 섹션 -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+        <div class="text-sm text-neutral-500 mb-1">총 퀴즈 횟수</div>
+        <div id="total-quizzes" class="text-3xl font-bold text-neutral-900">0</div>
+      </div>
+      <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+        <div class="text-sm text-neutral-500 mb-1">총 문제 수</div>
+        <div id="total-questions" class="text-3xl font-bold text-neutral-900">0</div>
+      </div>
+      <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+        <div class="text-sm text-neutral-500 mb-1">전체 정답률</div>
+        <div id="total-accuracy" class="text-3xl font-bold text-blue-600">0%</div>
+      </div>
+      <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+        <div class="text-sm text-neutral-500 mb-1">최근 5회 평균</div>
+        <div id="recent-accuracy" class="text-3xl font-bold text-green-600">0%</div>
+      </div>
+    </div>
+
+    <!-- 차트 섹션 -->
+    <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 mb-8">
+      <h2 class="text-lg font-semibold mb-4">최근 학습 기록</h2>
+      <canvas id="historyChart" height="80"></canvas>
+    </div>
+
+    <!-- 카테고리별 약점 분석 -->
+    <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 mb-8">
+      <h2 class="text-lg font-semibold mb-4">📊 카테고리별 약점 분석</h2>
+      <div id="weakness-analysis" class="space-y-3">
+        <p class="text-sm text-neutral-400">데이터를 불러오는 중...</p>
+      </div>
+    </div>
+
+    <!-- 이력 테이블 -->
+    <div class="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold">최근 퀴즈 이력</h2>
+        <button id="btn-reset-stats" class="px-3 py-1.5 rounded-lg border border-red-300 text-xs text-red-700 hover:bg-red-50">
+          통계 초기화
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="border-b border-neutral-200">
+            <tr>
+              <th class="text-left py-2 px-3">날짜</th>
+              <th class="text-left py-2 px-3">점수</th>
+              <th class="text-left py-2 px-3">정답률</th>
+              <th class="text-left py-2 px-3">유형</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody" class="divide-y divide-neutral-100">
+            <tr>
+              <td colspan="4" class="text-center py-8 text-neutral-400">데이터를 불러오는 중...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    let historyChart = null;
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        
+        // 레벨 정보 업데이트
+        if (data.level_info) {
+          updateLevelCard(data.level_info);
+        }
+        
+        // 통계 카드 업데이트
+        document.getElementById('total-quizzes').textContent = data.total_quizzes;
+        document.getElementById('total-questions').textContent = data.total_questions;
+        document.getElementById('total-accuracy').textContent = data.total_accuracy + '%';
+        document.getElementById('recent-accuracy').textContent = data.recent_accuracy + '%';
+        
+        // 차트 렌더링
+        renderChart(data.history);
+        
+        // 이력 테이블 렌더링
+        renderHistory(data.history);
+        
+        // 약점 분석 로드
+        loadWeaknessAnalysis();
+        
+      } catch (error) {
+        console.error('통계 로드 실패:', error);
+      }
+    }
+    
+    function updateLevelCard(levelInfo) {
+      const levelCard = document.getElementById('level-card');
+      const colorMap = {
+        'gray': 'from-gray-500 to-gray-700',
+        'blue': 'from-blue-500 to-blue-700',
+        'green': 'from-green-500 to-green-700',
+        'yellow': 'from-yellow-500 to-yellow-700',
+        'orange': 'from-orange-500 to-orange-700',
+        'red': 'from-red-500 to-red-700',
+        'purple': 'from-purple-500 to-purple-700'
+      };
+      
+      levelCard.className = `bg-gradient-to-r ${colorMap[levelInfo.color]} rounded-2xl shadow-lg p-6 mb-8 text-white`;
+      
+      document.getElementById('level-display').textContent = `Lv.${levelInfo.level} ${levelInfo.name}`;
+      document.getElementById('level-xp').textContent = `${levelInfo.xp} XP`;
+      
+      if (levelInfo.is_max_level) {
+        document.getElementById('level-progress-container').innerHTML = `
+          <div class="text-center text-lg font-semibold mt-2">🏆 최고 레벨 달성! 🏆</div>
+        `;
+      } else {
+        document.getElementById('level-progress-text').textContent = `${levelInfo.next_level}까지`;
+        document.getElementById('level-xp-needed').textContent = `${levelInfo.xp_to_next} XP`;
+        document.getElementById('level-progress-bar').style.width = `${levelInfo.progress_percent}%`;
+      }
+    }
+
+    async function loadWeaknessAnalysis() {
+      try {
+        const res = await fetch('/api/weakness');
+        const data = await res.json();
+        renderWeaknessAnalysis(data.analysis);
+      } catch (error) {
+        console.error('약점 분석 로드 실패:', error);
+      }
+    }
+
+    function renderWeaknessAnalysis(analysis) {
+      const container = document.getElementById('weakness-analysis');
+      
+      if (analysis.length === 0) {
+        container.innerHTML = '<p class="text-sm text-neutral-400">아직 데이터가 없습니다. 퀴즈를 풀어보세요!</p>';
+        return;
+      }
+      
+      container.innerHTML = analysis.map(item => {
+        const colorClass = item.weakness_level === '높음' ? 'bg-red-100 text-red-700' : 
+                          item.weakness_level === '중간' ? 'bg-yellow-100 text-yellow-700' : 
+                          'bg-green-100 text-green-700';
+        
+        return `
+          <div class="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+            <div class="flex-1">
+              <div class="font-medium">${item.category}</div>
+              <div class="text-sm text-neutral-500">${item.correct} / ${item.total} 문제 정답</div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold">${item.accuracy}%</div>
+              <div class="text-xs ${colorClass} px-2 py-1 rounded-full inline-block mt-1">
+                약점도: ${item.weakness_level}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderChart(history) {
+      const ctx = document.getElementById('historyChart');
+      
+      if (historyChart) {
+        historyChart.destroy();
+      }
+      
+      const labels = history.map(h => {
+        const date = new Date(h.date);
+        return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      });
+      
+      const data = history.map(h => h.accuracy);
+      
+      historyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '정답률 (%)',
+            data: data,
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderHistory(history) {
+      const tbody = document.getElementById('history-tbody');
+      
+      if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-neutral-400">아직 퀴즈 기록이 없습니다.</td></tr>';
+        return;
+      }
+      
+      // 최신 순으로 정렬
+      const sorted = [...history].reverse();
+      
+      tbody.innerHTML = sorted.map(h => {
+        const date = new Date(h.date);
+        const dateStr = date.toLocaleString('ko-KR', { 
+          year: 'numeric', 
+          month: '2-digit', 
+          day: '2-digit', 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        });
+        
+        const accuracyClass = h.accuracy >= 80 ? 'text-green-600' : h.accuracy >= 60 ? 'text-yellow-600' : 'text-red-600';
+        
+        return `
+          <tr class="hover:bg-neutral-50">
+            <td class="py-2 px-3">${dateStr}</td>
+            <td class="py-2 px-3">${h.score} / ${h.total}</td>
+            <td class="py-2 px-3 font-medium ${accuracyClass}">${h.accuracy}%</td>
+            <td class="py-2 px-3"><span class="text-xs bg-neutral-100 px-2 py-1 rounded">${h.type}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 통계 초기화
+    document.getElementById('btn-reset-stats').onclick = async () => {
+      if (!confirm('모든 학습 통계를 초기화하시겠습니까?')) return;
+      
+      try {
+        await fetch('/api/stats/reset', { method: 'POST' });
+        alert('통계가 초기화되었습니다.');
+        loadStats();
+      } catch (error) {
+        console.error('통계 초기화 실패:', error);
+        alert('통계 초기화에 실패했습니다.');
+      }
+    };
+
+    // 페이지 로드 시 통계 불러오기
+    loadStats();
+  </script>
+
+</body>
+</html>
