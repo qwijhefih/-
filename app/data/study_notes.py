@@ -1,3 +1,4 @@
+# File: app/data/study_notes.py
 # -*- coding: utf-8 -*-
 """
 학습 일지/메모 저장 모듈

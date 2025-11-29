@@ -1,3 +1,4 @@
+# File: app/data/question_generator.py
 # -*- coding: utf-8 -*-
 """
 AI 기반 문제 자동 생성 모듈

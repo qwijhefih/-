@@ -1,3 +1,4 @@
+# File: app/routes/summary.py
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template
 from app.kb import KB  # app 폴더의 kb.py에서 KB 데이터를 가져옵니다.

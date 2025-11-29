@@ -1,3 +1,4 @@
+# File: app/data/bookmarks.py
 # -*- coding: utf-8 -*-
 """
 북마크 저장 모듈

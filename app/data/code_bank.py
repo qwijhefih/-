@@ -1,3 +1,4 @@
+# File: app/data/code_bank.py
 # -*- coding: utf-8 -*-
 """
 [정리 완료] 코드형 문제 은행 (주관식 단답형)

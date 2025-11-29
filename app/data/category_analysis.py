@@ -1,3 +1,4 @@
+# File: app/data/category_analysis.py
 # -*- coding: utf-8 -*-
 """
 카테고리별 통계 분석 모듈

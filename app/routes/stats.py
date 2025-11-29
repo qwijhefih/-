@@ -1,3 +1,4 @@
+# File: app/routes/stats.py
 # -*- coding: utf-8 -*-
 from flask import Blueprint, render_template
 

@@ -1,4 +1,4 @@
-# app/__init__.py
+# File: app/__init__.py
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template
 

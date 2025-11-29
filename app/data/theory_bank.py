@@ -1,4 +1,5 @@
 # app/data/theory_bank.py
+# File: app/data/theory_bank.py
 # -*- coding: utf-8 -*-
 """
 [정리 완료] 정보처리산업기사 핵심 문제 은행
