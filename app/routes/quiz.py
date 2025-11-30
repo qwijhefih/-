@@ -23,18 +23,38 @@ bp = Blueprint("quiz", __name__)
 
 @bp.get("/api/quiz")
 def api_quiz():
-    """[수정] 총 20문제 (이론 15 + 코드 5)"""
+    """[수정] 총 20문제 (이론 15 + 코드 5), 난이도 필터 지원"""
     n = int(request.args.get("n", 20))
+    difficulty = request.args.get("difficulty")  # 난이도 필터 (기초/중급/고급)
+    
     n_code = 5
     n_theory = n - n_code
     
-    t_pool = THEORY_QUESTIONS[:]
+    # 난이도 필터 적용
+    if difficulty:
+        t_pool = [q for q in THEORY_QUESTIONS if q.get("difficulty") == difficulty]
+        c_pool = [q for q in CODE_QUESTIONS if q.get("difficulty") == difficulty]
+    else:
+        t_pool = THEORY_QUESTIONS[:]
+        c_pool = CODE_QUESTIONS[:]
+    
     random.shuffle(t_pool)
-    items_theory = t_pool[:n_theory]
-
-    c_pool = CODE_QUESTIONS[:]
     random.shuffle(c_pool)
+    
+    # 필터링 결과가 부족하면 전체에서 보충
+    items_theory = t_pool[:n_theory]
     items_code = c_pool[:n_code]
+    
+    # 부족한 경우 전체 풀에서 추가
+    if len(items_theory) < n_theory:
+        remaining = [q for q in THEORY_QUESTIONS if q not in items_theory]
+        random.shuffle(remaining)
+        items_theory.extend(remaining[:n_theory - len(items_theory)])
+    
+    if len(items_code) < n_code:
+        remaining = [q for q in CODE_QUESTIONS if q not in items_code]
+        random.shuffle(remaining)
+        items_code.extend(remaining[:n_code - len(items_code)])
 
     items = items_theory + items_code
     random.shuffle(items)
@@ -167,7 +187,7 @@ def api_ai_explain():
         if not api_key: return jsonify({"error": "AI API 키가 설정되지 않았습니다."}), 500
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key={api_key}"
         prompt = f"""
-        당신은 정보처리기사/산업기사 시험 튜터입니다.
+        당신은 정보처리산업기사 시험 튜터입니다.
         나는 이틀 뒤 시험이라 시간이 없습니다.
         다음 문제와 정답 해설을 보고, **가장 중요한 핵심만 1~2줄로 요약**해서 설명해주세요.
         [문제]:\n{q_text}\n[정답 및 기본 해설]:\n{q_explain}\n[AI의 핵심 요약]:
@@ -226,7 +246,8 @@ def api_ai_chat():
 
     try:
         api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key: return jsonify({"error": "AI API 키가 설정되지 않았습니다."}), 500
+        if not api_key:
+            return jsonify({"error": "AI API 키가 설정되지 않았습니다."}), 500
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-latest:generateContent?key={api_key}"
         
@@ -234,7 +255,7 @@ def api_ai_chat():
         
         # 1. AI의 역할을 정의하는 시스템 프롬프트
         system_prompt = """
-        당신은 '정보처리기사/산업기사' 시험 전문가입니다. 
+        당신은 '정보처리산업기사' 시험 전문가입니다. 
         학생의 다음 질문에 대해 핵심만 간단하고 명확하게 답변해주세요.
         학생의 이전 질문이나 대화 내용을 기억하고 맥락에 맞게 이어서 대답해주세요.
         """
@@ -266,15 +287,13 @@ def api_ai_chat():
         # --- [ Payload 수정 끝 ] ---
         
         headers = { "Content-Type": "application/json" }
-
+        
         response = requests.post(url, headers=headers, data=json.dumps(payload))
-        response.raise_for_status() # 4xx, 5xx 에러가 나면 여기서 멈춤
+        response.raise_for_status()
         
         response_data = response.json()
         
-        # [수정] Gemini API가 응답을 거부(Safety Rating)했는지 확인
         if not response_data.get('candidates'):
-            print(f"AI 챗봇 응답 거부: {response_data}")
             return jsonify({"error": "AI가 응답을 거부했습니다. (안전 설정)"}), 500
 
         ai_answer = response_data['candidates'][0]['content']['parts'][0]['text']
@@ -282,14 +301,11 @@ def api_ai_chat():
         return jsonify({"answer": ai_answer})
     
     except requests.exceptions.HTTPError as http_err:
-        print(f"AI 챗봇 HTTP 오류: {http_err}")
-        print(f"응답 내용: {http_err.response.text}")
         error_details = http_err.response.json().get('error', {}).get('message', '알 수 없는 HTTP 오류')
         return jsonify({"error": f"AI API 오류: {error_details}"}), 500
     
     except Exception as e:
-        print(f"AI 챗봇 기타 오류: {e}") 
-        return jsonify({"error": f"AI 응답 처리 중 오류 발생: {e}"}), 500
+        return jsonify({"error": f"AI 응답 처리 중 오류 발생: {str(e)}"}), 500
 
 # -----------------------------------------------------------------
 # 학습 통계 API

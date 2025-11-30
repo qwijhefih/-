@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#171717" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <title>실기 퀴즈 · NotebookLM 스타일</title>
+  <title>정보처리산업기사 · 스마트 학습</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -15,6 +15,12 @@
         extend: {
           screens: {
             'xs': '475px',
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+            'pulse-soft': 'pulseSoft 2s infinite',
+            'bounce-subtle': 'bounceSubtle 1s ease-in-out',
           }
         }
       }
@@ -26,197 +32,334 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // 다크모드 초기화
       if (localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
       }
-      
       window.hlRefresh = () =>
         document.querySelectorAll('pre code').forEach(el => window.hljs.highlightElement(el));
     });
   </script>
   <style>
-    pre code{
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    @keyframes bounceSubtle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    
+    pre code {
       display:block;background:#0d1117;color:#d0d7de;
       padding:12px 14px;border-radius:12px;
       font-family:'Fira Code','D2Coding',ui-monospace,Menlo,monospace;
       font-size:14px;line-height:1.55;white-space:pre-wrap;word-break:break-word;
     }
+    
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .dark .glass-card {
+      background: rgba(30, 30, 30, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .streak-fire { text-shadow: 0 0 10px rgba(251, 146, 60, 0.5); }
+    
+    .question-card {
+      transition: all 0.3s ease;
+    }
+    .question-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+    }
+    .dark .question-card:hover {
+      box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5);
+    }
+    
+    .difficulty-badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 9999px; }
+    .difficulty-기초 { background: #d1fae5; color: #065f46; }
+    .difficulty-중급 { background: #fef3c7; color: #92400e; }
+    .difficulty-고급 { background: #fee2e2; color: #991b1b; }
+    .dark .difficulty-기초 { background: #065f46; color: #d1fae5; }
+    .dark .difficulty-중급 { background: #92400e; color: #fef3c7; }
+    .dark .difficulty-고급 { background: #991b1b; color: #fee2e2; }
+    
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    .dark ::-webkit-scrollbar-thumb { background: #4b5563; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+    
+    .toast-enter { animation: slideUp 0.3s ease-out; }
   </style>
 </head>
-<body class="bg-neutral-50 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100 transition-colors">
+<body class="bg-gradient-to-br from-slate-50 via-purple-50/30 to-blue-50/30 dark:from-neutral-900 dark:via-purple-950/20 dark:to-blue-950/20 text-neutral-900 dark:text-neutral-100 transition-colors min-h-screen">
   
-  <header class="sticky top-0 z-40 backdrop-blur bg-white/80 dark:bg-neutral-900/80 border-b border-neutral-200 dark:border-neutral-700">
-    <div class="max-w-[1400px] mx-auto px-2 sm:px-4 h-14 flex items-center gap-1 sm:gap-3">
-      <div class="font-semibold tracking-tight text-sm sm:text-base">실기 퀴즈</div>
-      <div id="level-badge" class="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 text-xs font-semibold">
+  <!-- 헤더 -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl bg-white/70 dark:bg-neutral-900/70 border-b border-neutral-200/50 dark:border-neutral-700/50">
+    <div class="max-w-[1400px] mx-auto px-2 sm:px-4 h-14 flex items-center gap-2 sm:gap-3">
+      <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div class="text-xl">🎓</div>
+        <div class="font-bold text-sm sm:text-base bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent hidden xs:block">정처산기</div>
+      </a>
+      
+      <div id="level-badge" class="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/50 dark:to-blue-900/50 text-purple-700 dark:text-purple-300 text-xs font-bold">
         <span>Lv.1</span>
       </div>
-      <div id="top-progress" class="flex-1 h-1 bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden ml-2 sm:ml-4">
-        <div id="top-progress-bar" class="h-full w-0 bg-neutral-900 dark:bg-neutral-100 transition-all"></div>
+      
+      <div id="streak-badge" class="hidden sm:flex items-center gap-1 px-2 py-1 rounded-lg bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-xs font-bold streak-fire">
+        <span>🔥</span><span id="streak-count">0</span><span>일</span>
       </div>
-      <!-- 타이머 표시 -->
-      <div id="timer-display" class="font-mono text-xs sm:text-sm font-medium px-2 sm:px-3">00:00</div>
-      <button id="btn-dark-mode" class="px-2 sm:px-3 h-8 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-xs sm:text-sm hover:opacity-90 flex items-center gap-1">
-        <span id="dark-mode-icon">🌙</span>
-      </button>
-      <button id="btn-toggle-timer" class="px-2 sm:px-3 h-8 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-xs sm:text-sm hover:opacity-90 flex items-center gap-1">
-        <span id="timer-icon">⏱</span> <span class="hidden xs:inline">타이머</span>
-      </button>
-      <button id="btn-new" class="px-2 sm:px-3 h-8 sm:h-9 rounded-lg bg-neutral-900 dark:bg-neutral-700 text-white text-xs sm:text-sm hover:opacity-90">
-        <span class="hidden xs:inline">새 시험</span><span class="xs:hidden">📝</span>
-      </button>
-      <button id="btn-review" class="px-2 sm:px-3 h-8 sm:h-9 rounded-lg bg-neutral-800 dark:bg-neutral-600 text-white/90 text-xs sm:text-sm hover:opacity-90">
-        <span class="hidden xs:inline">복습</span><span class="xs:hidden">🔁</span>
-      </button>
+      
+      <div id="top-progress" class="flex-1 h-2 bg-neutral-100 dark:bg-neutral-800 rounded-full overflow-hidden ml-2 sm:ml-4 shadow-inner">
+        <div id="top-progress-bar" class="h-full w-0 bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500 ease-out rounded-full"></div>
+      </div>
+      
+      <div id="timer-display" class="font-mono text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-lg bg-neutral-100 dark:bg-neutral-800">00:00</div>
+      
+      <div class="flex items-center gap-1">
+        <button id="btn-dark-mode" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center transition-colors" title="다크모드 (D)">
+          <span id="dark-mode-icon">🌙</span>
+        </button>
+        <button id="btn-toggle-timer" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center transition-colors" title="타이머 (T)">
+          <span id="timer-icon">⏱</span>
+        </button>
+        <button id="btn-tts" class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 flex items-center justify-center transition-colors" title="음성 읽기 (V)">
+          <span id="tts-icon">🔊</span>
+        </button>
+        <button id="btn-new" class="px-3 h-8 sm:h-9 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs sm:text-sm font-semibold hover:from-purple-700 hover:to-blue-700 transition-all shadow-lg shadow-purple-500/25" title="새 시험 (N)">
+          <span class="hidden xs:inline">새 시험</span><span class="xs:hidden">📝</span>
+        </button>
+        <button id="btn-review" class="px-3 h-8 sm:h-9 rounded-lg bg-neutral-800 dark:bg-neutral-700 text-white text-xs sm:text-sm font-semibold hover:bg-neutral-700 dark:hover:bg-neutral-600 transition-colors" title="복습 (R)">
+          <span class="hidden xs:inline">복습</span><span class="xs:hidden">🔁</span>
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-[1400px] mx-auto px-2 sm:px-4 py-4 grid grid-cols-12 gap-2 sm:gap-4">
+  <main class="max-w-[1400px] mx-auto px-2 sm:px-4 py-4 grid grid-cols-12 gap-3 sm:gap-4">
     
+    <!-- 왼쪽 사이드바 -->
     <aside class="col-span-12 lg:col-span-3 lg:sticky lg:top-[4.5rem] lg:h-[calc(100vh-5.5rem)] mb-4 lg:mb-0">
-      <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm h-full flex flex-col">
-        <div class="p-3 sm:p-4 border-b border-neutral-100 dark:border-neutral-700">
-          <div class="text-sm font-semibold">세션</div>
-        </div>
-        <nav class="p-2 text-xs sm:text-sm">
-          <button id="nav-new" class="w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">📝 새 시험 (20문항)</button>
-          <button id="nav-review" class="w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">🔁 오답 복습 (10문항)</button>
-          <button id="nav-bookmarks" class="w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">⭐ 북마크 퀴즈</button>
-          <button id="nav-mock-exam" class="w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 font-semibold text-purple-700 dark:text-purple-400">🎯 실전 모의고사</button>
-          <button id="nav-notes" class="w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">📝 학습 메모</button>
-          <a href="{{ url_for('summary.kb_page') }}" class="block w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">📚 핵심 요약(KB) 보기</a>
-          <a href="{{ url_for('stats.stats_page') }}" class="block w-full text-left px-2 sm:px-3 py-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700">📊 학습 통계 보기</a>
-        </nav>
-        
-        <div class="px-3 sm:px-4 py-3 border-t border-neutral-100 dark:border-neutral-700">
-          <div class="text-xs sm:text-sm font-semibold mb-2">AI 문제 생성</div>
-          <div class="space-y-2">
-            <button id="btn-generate-theory" class="w-full px-2 sm:px-3 py-1.5 rounded-lg border border-blue-300 text-xs text-blue-700 hover:bg-blue-50">
-              🤖 이론 문제 생성
-            </button>
-            <button id="btn-generate-code" class="w-full px-2 sm:px-3 py-1.5 rounded-lg border border-green-300 text-xs text-green-700 hover:bg-green-50">
-              💻 코드 문제 생성
-            </button>
-            <button id="btn-generate-batch" class="w-full px-2 sm:px-3 py-1.5 rounded-lg border border-purple-300 text-xs text-purple-700 hover:bg-purple-50">
-              ⚡ 일괄 생성 (3개씩)
-            </button>
+      <div class="glass-card rounded-2xl shadow-xl h-full flex flex-col overflow-hidden">
+        <!-- 스크롤 가능한 컨테이너 -->
+        <div class="flex-1 overflow-y-auto">
+          <!-- 일일 목표 -->
+          <div class="p-4 border-b border-neutral-200/50 dark:border-neutral-700/50 bg-gradient-to-r from-purple-500/10 to-blue-500/10">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-bold">📅 오늘의 목표</div>
+              <button id="btn-set-goal" class="text-xs text-purple-600 dark:text-purple-400 hover:underline">설정</button>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex-1">
+                <div class="flex justify-between text-xs mb-1">
+                  <span id="daily-solved">0</span>
+                  <span>/ <span id="daily-goal">20</span> 문제</span>
+                </div>
+                <div class="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
+                  <div id="daily-progress" class="bg-gradient-to-r from-green-400 to-emerald-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+                </div>
+              </div>
+              <div id="goal-status" class="text-2xl">😊</div>
+            </div>
+          </div>
+
+          <!-- 세션 메뉴 -->
+          <div class="p-3 border-b border-neutral-200/50 dark:border-neutral-700/50">
+            <div class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-2 px-2">퀴즈 모드</div>
+            <nav class="space-y-1 text-sm">
+              <button id="nav-new" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-purple-50 dark:hover:bg-purple-900/30 flex items-center gap-3 transition-colors group">
+                <span class="text-lg group-hover:scale-110 transition-transform">📝</span>
+                <div><div class="font-medium">새 시험</div><div class="text-xs text-neutral-500">20문항 랜덤</div></div>
+              </button>
+              <button id="nav-review" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50 dark:hover:bg-orange-900/30 flex items-center gap-3 transition-colors group">
+                <span class="text-lg group-hover:scale-110 transition-transform">🔁</span>
+                <div><div class="font-medium">오답 복습</div><div class="text-xs text-neutral-500">틀린 문제 재도전</div></div>
+              </button>
+              <button id="nav-bookmarks" class="w-full text-left px-3 py-2.5 rounded-xl hover:bg-yellow-50 dark:hover:bg-yellow-900/30 flex items-center gap-3 transition-colors group">
+                <span class="text-lg group-hover:scale-110 transition-transform">⭐</span>
+                <div><div class="font-medium">북마크 퀴즈</div><div class="text-xs text-neutral-500">저장한 문제</div></div>
+              </button>
+              <button id="nav-mock-exam" class="w-full text-left px-3 py-2.5 rounded-xl bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/30 dark:to-blue-900/30 hover:from-purple-100 hover:to-blue-100 flex items-center gap-3 transition-colors group border border-purple-200 dark:border-purple-800">
+                <span class="text-lg group-hover:scale-110 transition-transform">🎯</span>
+                <div><div class="font-bold text-purple-700 dark:text-purple-300">실전 모의고사</div><div class="text-xs text-purple-600 dark:text-purple-400">40문제 / 40분</div></div>
+              </button>
+            </nav>
+          </div>
+          
+          <!-- 난이도 선택 -->
+          <div class="p-3 border-b border-neutral-200/50 dark:border-neutral-700/50">
+            <div class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-2 px-2">난이도 필터</div>
+            <div class="flex gap-2 px-2">
+              <button class="difficulty-filter flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 hover:ring-2 ring-green-400" data-difficulty="기초">🌱 기초</button>
+              <button class="difficulty-filter flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-300 hover:ring-2 ring-yellow-400" data-difficulty="중급">🌿 중급</button>
+              <button class="difficulty-filter flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition-all bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 hover:ring-2 ring-red-400" data-difficulty="고급">🌳 고급</button>
+            </div>
+            <button id="btn-all-difficulty" class="w-full mt-2 px-3 py-1.5 rounded-lg text-xs text-neutral-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors">전체 난이도</button>
+          </div>
+          
+          <!-- 추가 메뉴 -->
+          <div class="p-3 border-b border-neutral-200/50 dark:border-neutral-700/50 space-y-1">
+            <button id="nav-notes" class="w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-3 text-sm transition-colors"><span>📝</span> 학습 메모</button>
+            <a href="{{ url_for('summary.kb_page') }}" class="block w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-3 text-sm transition-colors"><span>📚</span> 핵심 요약(KB)</a>
+            <a href="{{ url_for('stats.stats_page') }}" class="block w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-3 text-sm transition-colors"><span>📊</span> 학습 통계</a>
+            <a href="/" class="block w-full text-left px-3 py-2 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center gap-3 text-sm transition-colors"><span>🏠</span> 홈으로</a>
+          </div>
+          
+          <!-- 성취 배지 -->
+          <div class="p-3 border-b border-neutral-200/50 dark:border-neutral-700/50">
+            <div class="text-xs font-semibold text-neutral-500 dark:text-neutral-400 mb-2 px-2">🏆 획득 배지</div>
+            <div id="badges-container" class="flex flex-wrap gap-2 px-2">
+              <span class="text-2xl opacity-30" title="첫 퀴즈 완료">🎯</span>
+              <span class="text-2xl opacity-30" title="10일 연속 학습">🔥</span>
+              <span class="text-2xl opacity-30" title="100문제 달성">💯</span>
+              <span class="text-2xl opacity-30" title="완벽한 점수">⭐</span>
+              <span class="text-2xl opacity-30" title="마스터 레벨">👑</span>
+            </div>
+          </div>
+          
+          <!-- 오답 관리 -->
+          <div class="p-3 border-b border-neutral-200/50 dark:border-neutral-700/50">
+            <div class="flex gap-2 px-2">
+              <button id="btn-export" class="flex-1 px-3 py-2 rounded-lg border border-neutral-200 dark:border-neutral-700 text-xs hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">📥 내보내기</button>
+              <button id="btn-clear" class="flex-1 px-3 py-2 rounded-lg border border-red-200 dark:border-red-900 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">🗑️ 초기화</button>
+            </div>
           </div>
         </div>
         
-        <div class="px-3 sm:px-4 py-3 border-t border-neutral-100 mt-auto">
-          <div class="text-xs sm:text-sm font-semibold mb-2">오답 관리</div>
-          <div class="flex gap-2">
-            <button id="btn-export" class="flex-1 px-2 sm:px-3 py-1.5 rounded-lg border border-neutral-300 text-xs">
-              <span class="hidden sm:inline">CSV 내보내기</span><span class="sm:hidden">📥 CSV</span>
-            </button>
-            <button id="btn-clear" class="flex-1 px-2 sm:px-3 py-1.5 rounded-lg border border-red-300 text-xs text-red-700">
-              <span class="hidden sm:inline">초기화</span><span class="sm:hidden">🗑️</span>
-            </button>
+        <!-- 단축키 (하단 고정) -->
+        <div class="p-3 bg-neutral-50 dark:bg-neutral-800/50 text-xs text-neutral-500 dark:text-neutral-400 border-t border-neutral-200/50 dark:border-neutral-700/50 flex-shrink-0">
+          <div class="font-semibold mb-1">⌨️ 단축키</div>
+          <div class="grid grid-cols-2 gap-1">
+            <span><kbd class="px-1 bg-neutral-200 dark:bg-neutral-700 rounded">N</kbd> 새 시험</span>
+            <span><kbd class="px-1 bg-neutral-200 dark:bg-neutral-700 rounded">R</kbd> 복습</span>
+            <span><kbd class="px-1 bg-neutral-200 dark:bg-neutral-700 rounded">D</kbd> 다크모드</span>
+            <span><kbd class="px-1 bg-neutral-200 dark:bg-neutral-700 rounded">V</kbd> 음성</span>
           </div>
-        </div>
-        <div class="px-3 sm:px-4 py-3 border-t border-neutral-100 text-xs text-neutral-500">
-          <span class="hidden sm:inline">• 정답 시 복습 연속 2회면 오답 목록에서 자동 제거 (향후 고도화 예정)<br/>
-          • 상단 진행 막대로 풀이 진척 확인</span>
-          <span class="sm:hidden">• 복습 2회 정답 시 자동 제거<br/>• 진행 막대로 진척 확인</span>
         </div>
       </div>
     </aside>
 
+    <!-- 메인 콘텐츠 -->
     <section class="col-span-12 lg:col-span-6">
-      <div id="quiz" class="space-y-3 sm:space-y-4 pb-20"></div>
+      <div id="quiz" class="space-y-4 pb-24"></div>
       
       <div id="submit-wrap" class="sticky bottom-4 mt-6 hidden">
         <div class="flex justify-end"> 
-          <button id="btn-submit" class="px-4 sm:px-6 h-10 sm:h-12 rounded-xl bg-neutral-900 text-white text-sm sm:text-base shadow-lg hover:shadow-xl transition-shadow">채점</button>
+          <button id="btn-submit" class="px-6 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white text-base font-bold shadow-xl hover:from-purple-700 hover:to-blue-700 transition-all hover:scale-105 hover:shadow-2xl">
+            ✓ 채점하기
+          </button>
         </div>
       </div>
       
       <div id="result" class="mt-4"></div>
     </section>
 
+    <!-- 오른쪽 사이드바 (AI 튜터) -->
     <aside class="col-span-12 lg:col-span-3 lg:sticky lg:top-[4.5rem] lg:h-[calc(100vh-5.5rem)]">
-      <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm h-full flex flex-col">
-        <div class="p-3 sm:p-4 border-b border-neutral-100 dark:border-neutral-700 flex items-center justify-between">
-          <div class="text-sm font-semibold">AI 튜터</div>
-          <button id="btn-view-notes" class="text-xs px-2 py-1 rounded-lg bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100 hover:opacity-80">📝 메모</button>
+      <div class="glass-card rounded-2xl shadow-xl h-full flex flex-col overflow-hidden">
+        <div class="p-4 border-b border-neutral-200/50 dark:border-neutral-700/50 flex items-center justify-between bg-gradient-to-r from-blue-500/10 to-purple-500/10">
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm">🤖</div>
+            <div><div class="text-sm font-bold">AI 튜터</div><div class="text-xs text-neutral-500 dark:text-neutral-400">24시간 질문 가능</div></div>
+          </div>
+          <button id="btn-view-notes" class="text-xs px-3 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-100 hover:opacity-80 font-semibold transition-opacity">📝 메모</button>
         </div>
   
-        <div id="chat-messages" class="flex-1 p-2 sm:p-3 space-y-2 sm:space-y-3 overflow-y-auto">
-          <div class="p-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg text-xs sm:text-sm">
-            안녕하세요! 정처산기 공부하다 궁금한 걸 물어보세요.
+        <div id="chat-messages" class="flex-1 p-3 space-y-3 overflow-y-auto">
+          <div class="p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl text-sm border border-blue-100 dark:border-blue-800">
+            <div class="font-semibold mb-1">👋 안녕하세요!</div>
+            정처산기 공부하다 궁금한 거 있으면 편하게 물어보세요!
           </div>
         </div>
   
-        <form id="chat-form" class="p-2 sm:p-3 border-t border-neutral-200 dark:border-neutral-700 flex items-center gap-2">
-          <textarea 
-            id="chat-input" 
-            placeholder="여기에 질문 입력..." 
-            class="flex-1 w-full px-2 sm:px-3 py-2 text-xs sm:text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-neutral-400 resize-none overflow-hidden" 
-            autocomplete="off" 
-            rows="1" 
-            oninput="this.style.height = 'auto'; this.style.height = (this.scrollHeight) + 'px';"
-          ></textarea>
-          <button id="chat-send-btn" type="submit" class="bg-neutral-900 dark:bg-neutral-700 text-white rounded-lg p-2 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center self-end flex-shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 sm:w-5 sm:h-5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-            </svg>
-          </button>
+        <form id="chat-form" class="p-3 border-t border-neutral-200/50 dark:border-neutral-700/50 bg-neutral-50/50 dark:bg-neutral-800/50">
+          <div class="flex items-end gap-2">
+            <textarea id="chat-input" placeholder="질문 입력... (Enter 전송)" class="flex-1 w-full px-4 py-3 text-sm border-0 bg-white dark:bg-neutral-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none shadow-sm" autocomplete="off" rows="1" oninput="this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px';"></textarea>
+            <button id="chat-send-btn" type="submit" class="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl p-3 flex items-center justify-center hover:from-blue-600 hover:to-purple-600 transition-all shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
+            </button>
+          </div>
+          <div class="mt-2 flex gap-2 flex-wrap">
+            <button type="button" class="quick-question text-xs px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors" data-question="이 문제 좀 설명해줘">💬 설명</button>
+            <button type="button" class="quick-question text-xs px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors" data-question="암기하기 좋은 방법 알려줘">🧠 암기법</button>
+            <button type="button" class="quick-question text-xs px-3 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors" data-question="비슷한 문제 더 보여줘">📚 유사문제</button>
+          </div>
         </form>
       </div>
     </aside>
-
   </main>
 
-  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden">
-    <div class="bg-neutral-900 text-white text-sm px-3 py-2 rounded-xl shadow-lg">완료</div>
+  <!-- 토스트 -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden z-50">
+    <div class="toast-enter bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-sm px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 font-medium">
+      <span id="toast-icon">✓</span>
+      <span id="toast-message">완료</span>
+    </div>
+  </div>
+
+  <!-- 일일 목표 설정 모달 -->
+  <div id="goal-modal" class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl shadow-2xl w-full max-w-sm p-6" style="animation: slideUp 0.3s ease-out">
+      <h3 class="text-lg font-bold mb-4">📅 일일 목표 설정</h3>
+      <div class="mb-4">
+        <label class="text-sm text-neutral-600 dark:text-neutral-400 mb-2 block">하루에 풀 문제 수</label>
+        <input type="number" id="goal-input" value="20" min="5" max="100" step="5" class="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-center text-xl font-bold focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+      <div class="flex gap-3">
+        <button id="btn-cancel-goal" class="flex-1 px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">취소</button>
+        <button id="btn-save-goal" class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold hover:from-purple-700 hover:to-blue-700 transition-colors">저장</button>
+      </div>
+    </div>
   </div>
 
   <!-- 학습 메모 모달 -->
   <div id="notes-modal" class="fixed inset-0 z-50 bg-black/50 hidden flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-      <!-- 헤더 -->
-      <div class="p-4 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between">
+    <div class="glass-card rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" style="animation: slideUp 0.3s ease-out">
+      <div class="p-4 border-b border-neutral-200/50 dark:border-neutral-700/50 flex items-center justify-between">
         <h2 class="text-lg font-bold">📝 학습 메모</h2>
-        <button id="close-notes-modal" class="text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-100">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+        <button id="close-notes-modal" class="w-8 h-8 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 flex items-center justify-center transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
       </div>
-
-      <!-- 본문 -->
       <div class="flex-1 overflow-y-auto p-4">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full">
-          <!-- 왼쪽: 메모 목록 -->
           <div class="flex flex-col">
             <div class="flex items-center justify-between mb-3">
               <h3 class="font-semibold">메모 목록</h3>
-              <button id="btn-add-note" class="px-3 py-1 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700">+ 새 메모</button>
+              <button id="btn-add-note" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-blue-600 text-white text-sm font-semibold">+ 새 메모</button>
             </div>
             <div class="flex gap-2 mb-3">
-              <button class="note-category-filter px-3 py-1 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-700 hover:bg-blue-100 dark:hover:bg-blue-900" data-category="">전체</button>
-              <button class="note-category-filter px-3 py-1 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-700 hover:bg-blue-100 dark:hover:bg-blue-900" data-category="일반">일반</button>
-              <button class="note-category-filter px-3 py-1 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-700 hover:bg-blue-100 dark:hover:bg-blue-900" data-category="이론">이론</button>
-              <button class="note-category-filter px-3 py-1 rounded-lg text-xs bg-neutral-100 dark:bg-neutral-700 hover:bg-blue-100 dark:hover:bg-blue-900" data-category="코딩">코딩</button>
+              <button class="note-category-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-100 dark:bg-neutral-700 hover:bg-purple-100 dark:hover:bg-purple-900 transition-colors" data-category="">전체</button>
+              <button class="note-category-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-100 dark:bg-neutral-700" data-category="일반">일반</button>
+              <button class="note-category-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-100 dark:bg-neutral-700" data-category="이론">이론</button>
+              <button class="note-category-filter px-3 py-1.5 rounded-lg text-xs font-medium bg-neutral-100 dark:bg-neutral-700" data-category="코딩">코딩</button>
             </div>
             <div id="notes-list" class="flex-1 space-y-2 overflow-y-auto"></div>
           </div>
-
-          <!-- 오른쪽: 메모 작성/수정 -->
-          <div class="flex flex-col border-l border-neutral-200 dark:border-neutral-700 pl-4">
+          <div class="flex flex-col border-l border-neutral-200/50 dark:border-neutral-700/50 pl-4">
             <h3 class="font-semibold mb-3">메모 작성</h3>
             <div class="flex-1 flex flex-col gap-3">
-              <input id="note-title" type="text" placeholder="제목" class="px-3 py-2 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              <select id="note-category" class="px-3 py-2 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="일반">일반</option>
-                <option value="이론">이론</option>
-                <option value="코딩">코딩</option>
+              <input id="note-title" type="text" placeholder="제목" class="px-4 py-3 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500" />
+              <select id="note-category" class="px-4 py-3 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value="일반">일반</option><option value="이론">이론</option><option value="코딩">코딩</option>
               </select>
-              <textarea id="note-content" placeholder="메모 내용을 입력하세요..." class="flex-1 px-3 py-2 border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-              <div class="flex gap-2">
-                <button id="btn-save-note" class="flex-1 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">저장</button>
-                <button id="btn-cancel-note" class="px-4 py-2 rounded-lg border border-neutral-300 dark:border-neutral-600 hover:bg-neutral-100 dark:hover:bg-neutral-700">취소</button>
+              <textarea id="note-content" placeholder="메모 내용..." class="flex-1 px-4 py-3 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"></textarea>
+              <div class="flex gap-3">
+                <button id="btn-save-note" class="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold">저장</button>
+                <button id="btn-cancel-note" class="px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">취소</button>
               </div>
             </div>
           </div>
@@ -225,6 +368,6 @@
     </div>
   </div>
 
-  <script src="/static/JS/app.js"></script>
+  <script src="/static/js/app.js"></script>
 </body>
 </html>

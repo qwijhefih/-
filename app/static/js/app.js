@@ -1,15 +1,69 @@
 // static/app.js
 // ───────────────────────────────────────────────
-// [최종본] 실기 퀴즈 클라이언트 (주관식, AI우측, Textarea)
+// [최종본] 정보처리산업기사 스마트 학습 클라이언트
+// 최고의 사이트를 위한 업그레이드 버전
 // ───────────────────────────────────────────────
 
 const esc = (s) =>
   String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 
-// 타이머 관련 전역 변수
+// ───────────────────────────────────────────────
+// 전역 변수
+// ───────────────────────────────────────────────
 let timerInterval = null;
 let timerSeconds = 0;
 let timerMode = false;
+let currentDifficulty = null; // 현재 선택된 난이도 필터
+let ttsEnabled = false;
+let currentUtterance = null;
+
+// 일일 목표 & 스트릭
+let dailyGoal = parseInt(localStorage.getItem('dailyGoal')) || 20;
+let dailySolved = 0;
+let streak = 0;
+
+// 배지 시스템
+const BADGES = {
+  firstQuiz: { id: 'firstQuiz', icon: '🎯', title: '첫 퀴즈 완료', desc: '첫 번째 퀴즈를 완료했습니다!' },
+  streak10: { id: 'streak10', icon: '🔥', title: '10일 연속', desc: '10일 연속 학습을 달성했습니다!' },
+  solved100: { id: 'solved100', icon: '💯', title: '100문제 달성', desc: '총 100문제를 풀었습니다!' },
+  perfectScore: { id: 'perfectScore', icon: '⭐', title: '완벽한 점수', desc: '만점을 받았습니다!' },
+  master: { id: 'master', icon: '👑', title: '마스터', desc: '최고 레벨에 도달했습니다!' }
+};
+
+// 사운드 효과 (Web Audio API)
+const audioContext = typeof AudioContext !== 'undefined' ? new (window.AudioContext || window.webkitAudioContext)() : null;
+
+function playSound(type) {
+  if (!audioContext) return;
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  switch(type) {
+    case 'correct':
+      oscillator.frequency.value = 523.25; // C5
+      gainNode.gain.value = 0.1;
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.15);
+      break;
+    case 'wrong':
+      oscillator.frequency.value = 220; // A3
+      gainNode.gain.value = 0.1;
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.3);
+      break;
+    case 'levelUp':
+      oscillator.frequency.value = 440;
+      gainNode.gain.value = 0.1;
+      oscillator.start();
+      setTimeout(() => oscillator.frequency.value = 554.37, 100);
+      setTimeout(() => oscillator.frequency.value = 659.25, 200);
+      oscillator.stop(audioContext.currentTime + 0.4);
+      break;
+  }
+}
 
 function renderQuestionText(qText){
   const isCode = qText.startsWith("[코드]");
@@ -20,6 +74,12 @@ function renderQuestionText(qText){
     <div class="mb-2 font-medium">${esc(title)}</div>
     <pre><code class="language-python">${esc(code)}</code></pre>
   `;
+}
+
+// 난이도 배지 생성
+function getDifficultyBadge(difficulty) {
+  if (!difficulty) return '';
+  return `<span class="difficulty-badge difficulty-${difficulty}">${difficulty}</span>`;
 }
 
 /**
@@ -33,13 +93,25 @@ function renderQuestionCard(q, index){
     this.style.height = (this.scrollHeight) + 'px';
   `;
 
+  const difficulty = q.difficulty || '';
+  const category = q.category || '';
+
   return `
-    <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm p-4">
+    <div class="question-card bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm p-4 animate-fade-in" data-index="${index}">
       <div class="flex items-center justify-between mb-2">
-        <div class="text-sm text-neutral-500 dark:text-neutral-400">문제 ${index+1}</div>
-        <button onclick="toggleBookmark('${esc(q.q)}', '${esc(q.answer)}', '${esc(q.explain || '')}')" class="text-sm text-neutral-500 dark:text-neutral-400 hover:text-yellow-500">
-          <span id="bookmark-icon-${index}">⭐</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <div class="text-sm text-neutral-500 dark:text-neutral-400">문제 ${index+1}</div>
+          ${getDifficultyBadge(difficulty)}
+          ${category ? `<span class="text-xs text-neutral-400 dark:text-neutral-500">${esc(category)}</span>` : ''}
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="speakQuestion(${index})" class="text-sm text-neutral-400 hover:text-blue-500 transition-colors" title="문제 읽기">
+            🔊
+          </button>
+          <button onclick="toggleBookmark('${esc(q.q)}', '${esc(q.answer)}', '${esc(q.explain || '')}')" class="text-sm text-neutral-500 dark:text-neutral-400 hover:text-yellow-500 transition-colors">
+            <span id="bookmark-icon-${index}">⭐</span>
+          </button>
+        </div>
       </div>
       <div class="mb-3">${renderQuestionText(q.q)}</div>
       
@@ -47,7 +119,7 @@ function renderQuestionCard(q, index){
         <textarea
           id="q${index}" 
           name="q${index}" 
-          class="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-neutral-900 dark:focus:ring-neutral-400 resize-none overflow-hidden" 
+          class="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 resize-none overflow-hidden transition-all" 
           placeholder="정답을 입력하세요..."
           autocomplete="off"
           rows="1" 
@@ -100,13 +172,21 @@ function checkQuizProgress() {
 
 
 async function loadQuiz(mode="new"){
-  const url = mode==="review" ? "/api/review" : "/api/quiz";
+  let url = mode==="review" ? "/api/review" : "/api/quiz";
+  
+  // 난이도 필터 적용
+  if (currentDifficulty && mode !== "review") {
+    url += `?difficulty=${encodeURIComponent(currentDifficulty)}`;
+  }
+  
   const res = await fetch(url);
   const data = await res.json();
   window.quizItems = data.items;
   window.currentQuizMode = mode; // 현재 퀴즈 모드 저장
   renderQuiz(data.items);
-  toast(mode==="review" ? "오답 복습 시작!" : "새 시험 시작!");
+  
+  const modeText = currentDifficulty ? `${currentDifficulty} 난이도 ` : '';
+  toast(mode==="review" ? "오답 복습 시작!" : `${modeText}새 시험 시작!`);
   
   // 타이머 시작 (타이머 모드가 활성화된 경우)
   if (timerMode) {
@@ -119,8 +199,9 @@ async function loadQuiz(mode="new"){
   chatHistory = [];
   const chatMessages = document.getElementById('chat-messages');
   chatMessages.innerHTML = `
-    <div class="p-2 bg-neutral-100 dark:bg-neutral-700 rounded-lg text-sm">
-      안녕하세요! 정처산기 공부하다 궁금한 걸 물어보세요.
+    <div class="p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/30 dark:to-purple-900/30 rounded-xl text-sm border border-blue-100 dark:border-blue-800">
+      <div class="font-semibold mb-1">👋 안녕하세요!</div>
+      정처산기 공부하다 궁금한 거 있으면 편하게 물어보세요!
     </div>
   `;
 }
@@ -206,7 +287,7 @@ async function submitQuiz(){
       if (level_info) {
           const levelColor = getLevelColor(level_info.color);
           levelUpHtml = `
-              <div class="mt-3 p-3 bg-gradient-to-r ${levelColor} rounded-xl text-white">
+              <div class="mt-3 p-4 bg-gradient-to-r ${levelColor} rounded-xl text-white shadow-lg">
                   <div class="flex items-center justify-between mb-2">
                       <div>
                           <div class="text-xs opacity-90">현재 레벨</div>
@@ -214,7 +295,7 @@ async function submitQuiz(){
                       </div>
                       <div class="text-right">
                           <div class="text-xs opacity-90">획득 XP</div>
-                          <div class="text-xl font-bold">+${items.find(i => i.user)?.earned_xp || (score * 5)} XP</div>
+                          <div class="text-xl font-bold">+${score * 5} XP</div>
                       </div>
                   </div>
                   ${!level_info.is_max_level ? `
@@ -230,7 +311,20 @@ async function submitQuiz(){
                   ` : '<div class="text-center text-sm mt-2">🏆 최고 레벨 달성! 🏆</div>'}
               </div>
           `;
+          
+          // 레벨업 사운드 효과
+          if (level_info.level_up) {
+            playSound('levelUp');
+          }
       }
+      
+      // 일일 목표 업데이트
+      dailySolved += total;
+      updateDailyProgress();
+      saveDailyProgress();
+      
+      // 배지 체크
+      checkBadges(score, total, level_info);
 
       document.getElementById("result").innerHTML = `
           <div class="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm p-4 mt-4">
@@ -279,11 +373,63 @@ async function submitQuiz(){
  ▼▼▼ 기본 이벤트 리스너 (수정 없음) ▼▼▼
  -----------------------------------------------------------------
 */
-function toast(msg){
+function toast(msg, type = 'success'){
   const el = document.getElementById("toast");
-  el.querySelector("div").textContent = msg;
+  const icon = document.getElementById("toast-icon");
+  const message = document.getElementById("toast-message");
+  
+  // 아이콘 설정
+  const icons = {
+    success: '✓',
+    error: '✗',
+    info: 'ℹ',
+    badge: '🏆'
+  };
+  
+  if (icon) icon.textContent = icons[type] || '✓';
+  if (message) message.textContent = msg;
+  
   el.classList.remove("hidden");
-  setTimeout(()=>el.classList.add("hidden"), 1800);
+  setTimeout(()=>el.classList.add("hidden"), 2500);
+}
+
+// 문제 읽기 (TTS)
+function speakQuestion(index) {
+  const q = window.quizItems[index];
+  if (!q) return;
+  
+  if ('speechSynthesis' in window) {
+    // 이전 읽기 중지
+    window.speechSynthesis.cancel();
+    
+    const text = q.q.replace(/\[코드\]/g, '코드 문제입니다.');
+    currentUtterance = new SpeechSynthesisUtterance(text);
+    currentUtterance.lang = 'ko-KR';
+    currentUtterance.rate = 0.9;
+    
+    window.speechSynthesis.speak(currentUtterance);
+    toast('문제를 읽고 있습니다...', 'info');
+  } else {
+    toast('음성 읽기를 지원하지 않는 브라우저입니다.', 'error');
+  }
+}
+
+// TTS 토글
+function toggleTTS() {
+  ttsEnabled = !ttsEnabled;
+  const btn = document.getElementById('btn-tts');
+  const icon = document.getElementById('tts-icon');
+  
+  if (ttsEnabled) {
+    btn.classList.add('bg-blue-100', 'dark:bg-blue-900');
+    icon.textContent = '🔊';
+    toast('음성 읽기 ON');
+  } else {
+    btn.classList.remove('bg-blue-100', 'dark:bg-blue-900');
+    icon.textContent = '🔇';
+    window.speechSynthesis?.cancel();
+    toast('음성 읽기 OFF');
+  }
 }
 
 // 문제 정답 처리 (재출제 일정 업데이트)
@@ -660,6 +806,7 @@ async function sendChatMessage() {
         if (!res.ok) throw new Error('AI 서버 응답 오류');
 
         const data = await res.json();
+        
         let aiAnswer = ""; // AI 답변을 저장할 변수
 
         if (data.answer) {
@@ -905,9 +1052,326 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
     
-    // 페이지 로드 시 레벨 정보 표시
+    // 페이지 로드 시 초기화
     loadLevelBadge();
+    initDailyProgress();
+    initStreak();
+    initDifficultyFilters();
+    initGoalModal();
+    initKeyboardShortcuts();
+    initQuickQuestions();
+    loadBadges();
+    
+    // TTS 버튼
+    document.getElementById('btn-tts')?.addEventListener('click', toggleTTS);
 });
+
+// ───────────────────────────────────────────────
+// 일일 목표 시스템
+// ───────────────────────────────────────────────
+
+function initDailyProgress() {
+    // 오늘 날짜 체크 - 날짜가 바뀌면 초기화
+    const today = new Date().toDateString();
+    const savedDate = localStorage.getItem('dailyDate');
+    
+    if (savedDate !== today) {
+        localStorage.setItem('dailyDate', today);
+        localStorage.setItem('dailySolved', '0');
+        dailySolved = 0;
+    } else {
+        dailySolved = parseInt(localStorage.getItem('dailySolved')) || 0;
+    }
+    
+    dailyGoal = parseInt(localStorage.getItem('dailyGoal')) || 20;
+    
+    updateDailyProgress();
+}
+
+function updateDailyProgress() {
+    const solvedEl = document.getElementById('daily-solved');
+    const goalEl = document.getElementById('daily-goal');
+    const progressEl = document.getElementById('daily-progress');
+    const statusEl = document.getElementById('goal-status');
+    
+    if (solvedEl) solvedEl.textContent = dailySolved;
+    if (goalEl) goalEl.textContent = dailyGoal;
+    
+    const percent = Math.min((dailySolved / dailyGoal) * 100, 100);
+    if (progressEl) progressEl.style.width = `${percent}%`;
+    
+    // 상태 이모지
+    if (statusEl) {
+        if (percent >= 100) statusEl.textContent = '🎉';
+        else if (percent >= 75) statusEl.textContent = '😄';
+        else if (percent >= 50) statusEl.textContent = '😊';
+        else if (percent >= 25) statusEl.textContent = '🙂';
+        else statusEl.textContent = '💪';
+    }
+}
+
+function saveDailyProgress() {
+    localStorage.setItem('dailySolved', dailySolved.toString());
+    localStorage.setItem('dailyDate', new Date().toDateString());
+}
+
+function initGoalModal() {
+    const btnSetGoal = document.getElementById('btn-set-goal');
+    const goalModal = document.getElementById('goal-modal');
+    const btnSaveGoal = document.getElementById('btn-save-goal');
+    const btnCancelGoal = document.getElementById('btn-cancel-goal');
+    const goalInput = document.getElementById('goal-input');
+    
+    if (btnSetGoal) {
+        btnSetGoal.addEventListener('click', () => {
+            if (goalInput) goalInput.value = dailyGoal;
+            goalModal?.classList.remove('hidden');
+            goalModal?.classList.add('flex');
+        });
+    }
+    
+    if (btnCancelGoal) {
+        btnCancelGoal.addEventListener('click', () => {
+            goalModal?.classList.add('hidden');
+            goalModal?.classList.remove('flex');
+        });
+    }
+    
+    if (btnSaveGoal) {
+        btnSaveGoal.addEventListener('click', () => {
+            const newGoal = parseInt(goalInput?.value) || 20;
+            dailyGoal = Math.max(5, Math.min(100, newGoal));
+            localStorage.setItem('dailyGoal', dailyGoal.toString());
+            updateDailyProgress();
+            goalModal?.classList.add('hidden');
+            goalModal?.classList.remove('flex');
+            toast(`일일 목표가 ${dailyGoal}문제로 설정되었습니다!`);
+        });
+    }
+}
+
+// ───────────────────────────────────────────────
+// 스트릭 시스템
+// ───────────────────────────────────────────────
+
+function initStreak() {
+    const today = new Date().toDateString();
+    const lastStudyDate = localStorage.getItem('lastStudyDate');
+    streak = parseInt(localStorage.getItem('streak')) || 0;
+    
+    if (lastStudyDate) {
+        const lastDate = new Date(lastStudyDate);
+        const todayDate = new Date(today);
+        const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays > 1) {
+            // 하루 이상 건너뛰면 스트릭 리셋
+            streak = 0;
+            localStorage.setItem('streak', '0');
+        }
+    }
+    
+    updateStreakDisplay();
+}
+
+function updateStreak() {
+    const today = new Date().toDateString();
+    const lastStudyDate = localStorage.getItem('lastStudyDate');
+    
+    if (lastStudyDate !== today) {
+        // 오늘 처음 공부하는 경우
+        streak++;
+        localStorage.setItem('streak', streak.toString());
+        localStorage.setItem('lastStudyDate', today);
+        
+        if (streak % 7 === 0) {
+            toast(`🔥 ${streak}일 연속 학습 달성!`, 'badge');
+        }
+    }
+    
+    updateStreakDisplay();
+}
+
+function updateStreakDisplay() {
+    const streakBadge = document.getElementById('streak-badge');
+    const streakCount = document.getElementById('streak-count');
+    
+    if (streakCount) streakCount.textContent = streak;
+    
+    if (streakBadge) {
+        if (streak > 0) {
+            streakBadge.classList.remove('hidden');
+            streakBadge.classList.add('sm:flex');
+        } else {
+            streakBadge.classList.add('hidden');
+        }
+    }
+}
+
+// ───────────────────────────────────────────────
+// 난이도 필터 시스템
+// ───────────────────────────────────────────────
+
+function initDifficultyFilters() {
+    const filters = document.querySelectorAll('.difficulty-filter');
+    const btnAllDifficulty = document.getElementById('btn-all-difficulty');
+    
+    filters.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const difficulty = btn.dataset.difficulty;
+            
+            // 같은 버튼 다시 클릭하면 해제
+            if (currentDifficulty === difficulty) {
+                currentDifficulty = null;
+                btn.classList.remove('ring-2');
+            } else {
+                currentDifficulty = difficulty;
+                filters.forEach(b => b.classList.remove('ring-2'));
+                btn.classList.add('ring-2');
+            }
+            
+            toast(currentDifficulty ? `${currentDifficulty} 난이도 필터 적용` : '전체 난이도');
+        });
+    });
+    
+    if (btnAllDifficulty) {
+        btnAllDifficulty.addEventListener('click', () => {
+            currentDifficulty = null;
+            filters.forEach(b => b.classList.remove('ring-2'));
+            toast('전체 난이도');
+        });
+    }
+}
+
+// ───────────────────────────────────────────────
+// 키보드 단축키
+// ───────────────────────────────────────────────
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+        // 입력 필드에서는 단축키 비활성화
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+        
+        switch(e.key.toLowerCase()) {
+            case 'n':
+                e.preventDefault();
+                loadQuiz('new');
+                break;
+            case 'r':
+                e.preventDefault();
+                loadQuiz('review');
+                break;
+            case 'd':
+                e.preventDefault();
+                document.getElementById('btn-dark-mode')?.click();
+                break;
+            case 't':
+                e.preventDefault();
+                document.getElementById('btn-toggle-timer')?.click();
+                break;
+            case 'v':
+                e.preventDefault();
+                toggleTTS();
+                break;
+            case 'enter':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    submitQuiz();
+                }
+                break;
+        }
+    });
+}
+
+// ───────────────────────────────────────────────
+// 빠른 질문 버튼
+// ───────────────────────────────────────────────
+
+function initQuickQuestions() {
+    document.querySelectorAll('.quick-question').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const question = btn.dataset.question;
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput && question) {
+                chatInput.value = question;
+                chatInput.focus();
+            }
+        });
+    });
+}
+
+// ───────────────────────────────────────────────
+// 배지 시스템
+// ───────────────────────────────────────────────
+
+function loadBadges() {
+    const earnedBadges = JSON.parse(localStorage.getItem('earnedBadges')) || [];
+    const container = document.getElementById('badges-container');
+    
+    if (!container) return;
+    
+    container.innerHTML = Object.values(BADGES).map(badge => {
+        const isEarned = earnedBadges.includes(badge.id);
+        return `<span class="text-2xl ${isEarned ? '' : 'opacity-30'} cursor-help transition-opacity hover:opacity-100" title="${badge.title}: ${badge.desc}">${badge.icon}</span>`;
+    }).join('');
+}
+
+function earnBadge(badgeId) {
+    const earnedBadges = JSON.parse(localStorage.getItem('earnedBadges')) || [];
+    
+    if (!earnedBadges.includes(badgeId)) {
+        earnedBadges.push(badgeId);
+        localStorage.setItem('earnedBadges', JSON.stringify(earnedBadges));
+        
+        const badge = BADGES[badgeId];
+        if (badge) {
+            toast(`${badge.icon} ${badge.title} 배지 획득!`, 'badge');
+            playSound('levelUp');
+            loadBadges();
+        }
+    }
+}
+
+function checkBadges(score, total, levelInfo) {
+    // 첫 퀴즈 완료
+    earnBadge('firstQuiz');
+    
+    // 완벽한 점수
+    if (score === total && total > 0) {
+        earnBadge('perfectScore');
+        playSound('correct');
+    }
+    
+    // 스트릭 업데이트
+    updateStreak();
+    
+    // 10일 연속 학습
+    if (streak >= 10) {
+        earnBadge('streak10');
+    }
+    
+    // 마스터 레벨
+    if (levelInfo && levelInfo.is_max_level) {
+        earnBadge('master');
+    }
+    
+    // 100문제 달성 (통계에서 확인 필요)
+    checkSolvedCount();
+}
+
+async function checkSolvedCount() {
+    try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.total_questions >= 100) {
+            earnBadge('solved100');
+        }
+    } catch (e) {
+        // 에러 무시
+    }
+}
 
 // 레벨 배지 업데이트
 async function loadLevelBadge() {
