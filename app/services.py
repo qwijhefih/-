@@ -1,5 +1,11 @@
 # File: app/services.py
 # -*- coding: utf-8 -*-
+"""
+[레거시 코드] 객관식 퀴즈 서비스 모듈
+- 현재 사용되지 않음 (quiz.py에서 직접 data 모듈 사용)
+- 향후 객관식 퀴즈 모드 추가 시 활용 가능
+- 삭제하지 않고 보관
+"""
 import json, os, random, csv
 from datetime import datetime
 from typing import Dict, Any, List, Tuple

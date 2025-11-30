@@ -35,6 +35,8 @@ def generate_theory_questions(category: str, count: int = 5) -> List[Dict[str, A
 2. 각 문제는 명확한 정답이 있어야 함
 3. 정답은 가능한 모든 표현을 배열로 제공 (예: ["TCP", "Transmission Control Protocol"])
 4. 해설은 핵심만 1-2줄로 간결하게
+5. 난이도(difficulty)는 "기초", "중급", "고급" 중 하나로 지정
+6. 카테고리(category)는 "{category}"로 고정
 
 **출력 형식 (JSON):**
 ```json
@@ -42,7 +44,9 @@ def generate_theory_questions(category: str, count: int = 5) -> List[Dict[str, A
   {{
     "q": "문제 내용",
     "answer": ["정답1", "정답2"],
-    "explain": "핵심 해설"
+    "explain": "핵심 해설",
+    "difficulty": "기초|중급|고급",
+    "category": "{category}"
   }}
 ]
 ```
@@ -110,6 +114,8 @@ def generate_code_questions(language: str, count: int = 5) -> List[Dict[str, Any
 3. 출력 결과가 명확해야 함
 4. 정답은 가능한 모든 표현을 배열로 제공
 5. 해설은 코드 동작 원리를 간결하게 설명
+6. 난이도(difficulty)는 "기초", "중급", "고급" 중 하나로 지정
+7. 카테고리(category)는 "코딩"으로 고정
 
 **출력 형식 (JSON):**
 ```json
@@ -117,7 +123,10 @@ def generate_code_questions(language: str, count: int = 5) -> List[Dict[str, Any
   {{
     "q": "[코드] 다음 {language} 코드의 출력 결과는?\\n\\n코드 내용",
     "answer": ["정답1", "정답2"],
-    "explain": "핵심 해설"
+    "explain": "핵심 해설",
+    "difficulty": "기초|중급|고급",
+    "category": "코딩",
+    "language": "{language}"
   }}
 ]
 ```
